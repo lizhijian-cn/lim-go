@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "./;proto";
+
+service ChatService {
+  rpc Chat(stream Message) returns (stream Message) {}
+}
+
+enum MessageType {
+  LOGIN = 0;
+  HEARTBEAT = 1;
+  TEXT = 2;
+}
+
+// 请求数据 Request格式定义
+message Message {
+  string sender = 1;
+  string receiver = 2;
+  MessageType msgType = 3;
+  bytes content = 4;
+}
+
