@@ -1,12 +1,13 @@
-package auth
+package util
 
 import (
+	"errors"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )
 
 const (
-	accessSecret = "jdnfksdmfksd"
+	secret = "lim"
 )
 
 func GenerateToken(username string, expireDuration time.Duration) (string, error) {
@@ -16,24 +17,16 @@ func GenerateToken(username string, expireDuration time.Duration) (string, error
 		"exp":      expire,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString([]byte(accessSecret))
+	tokenString, err := token.SignedString([]byte(secret))
 	if err != nil {
 		return "", err
 	}
 	return tokenString, nil
 }
 
-type tokenVerifyError struct {
-	prob string
-}
-
-func (err *tokenVerifyError) Error() string {
-	return err.prob
-}
-
 func VerifyToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return []byte(accessSecret), nil
+		return []byte(secret), nil
 	})
 	if err != nil {
 		return "", err
@@ -43,10 +36,11 @@ func VerifyToken(tokenString string) (string, error) {
 		if err := claims.Valid(); err != nil {
 			return "", err
 		}
-		if username, ok := claims["username"].(string); ok {
+		if username, ok := claims["username"].(string); !ok {
+			err = errors.New("failed to parse username in token")
+		} else {
 			return username, nil
 		}
-		return "", &tokenVerifyError{"username not found"}
 	}
-	return "", &tokenVerifyError{"token invalid"}
+	return "", errors.New("invalid token")
 }
